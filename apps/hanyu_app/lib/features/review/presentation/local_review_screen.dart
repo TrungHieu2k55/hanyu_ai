@@ -1,3 +1,4 @@
+import '../../../shared/widgets/pronunciation_button.dart';
 import '../../vocabulary/domain/vocabulary_item.dart';
 
 import 'package:flutter/material.dart';
@@ -86,6 +87,7 @@ class LocalReviewLanding extends ConsumerWidget {
           intentKey: 'refresh:${data.revision}',
           onCommit: (_) => ref.read(localControllerProvider.notifier).reload(),
         ),
+        const SizedBox(height: 8),
         OutlinedButton(
           onPressed: () => context.push('/saved'),
           child: const Text('Quản lý từ đã lưu'),
@@ -121,10 +123,12 @@ class LocalReviewScreen extends ConsumerStatefulWidget {
   const LocalReviewScreen({
     required this.session,
     required this.revision,
+    required this.soundEnabled,
     super.key,
   });
   final LocalReviewSession session;
   final int revision;
+  final bool soundEnabled;
   @override
   ConsumerState<LocalReviewScreen> createState() => _LocalReviewScreenState();
 }
@@ -193,7 +197,11 @@ class _LocalReviewScreenState extends ConsumerState<LocalReviewScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        _ReviewFace(word: word, revealed: session.revealed),
+        _ReviewFace(
+          word: word,
+          revealed: session.revealed,
+          soundEnabled: widget.soundEnabled,
+        ),
         const SizedBox(height: 16),
         if (!session.revealed)
           AsyncCommitButton(
@@ -282,9 +290,14 @@ class _LocalReviewScreenState extends ConsumerState<LocalReviewScreen> {
 }
 
 class _ReviewFace extends StatelessWidget {
-  const _ReviewFace({required this.word, required this.revealed});
+  const _ReviewFace({
+    required this.word,
+    required this.revealed,
+    required this.soundEnabled,
+  });
   final VocabularyItem word;
   final bool revealed;
+  final bool soundEnabled;
 
   @override
   Widget build(BuildContext context) => LearnerSurface(
@@ -310,7 +323,14 @@ class _ReviewFace extends StatelessWidget {
             size: revealed ? 56 : 72,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        Center(
+          child: PronunciationButton(
+            hanzi: word.hanzi,
+            soundEnabled: soundEnabled,
+          ),
+        ),
+        const SizedBox(height: 8),
         if (!revealed) ...[
           const Text(
             'Thử nhớ nghĩa tiếng Việt.',

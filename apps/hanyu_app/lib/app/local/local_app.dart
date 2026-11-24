@@ -90,6 +90,7 @@ final Provider<GoRouter> localRouterProvider = Provider<GoRouter>((ref) {
                       key: ValueKey(session.id),
                       session: session,
                       revision: d.revision,
+                      soundEnabled: d.preferences.sound,
                     );
             }),
           ),
@@ -222,6 +223,7 @@ final Provider<GoRouter> localRouterProvider = Provider<GoRouter>((ref) {
                       key: ValueKey(word.entry.id),
                       word: word,
                       revision: d.revision,
+                      soundEnabled: d.preferences.sound,
                     );
             }),
           ),
@@ -412,6 +414,33 @@ class _LocalShellState extends State<_LocalShell> {
     '/profile',
   ];
   static const labels = ['Học', 'Ôn tập', 'Luyện tập', 'Tiến độ', 'Cá nhân'];
+
+  String get pageTitle => switch (path.split('/').skip(1).toList()) {
+    ['learn'] => 'Học hôm nay',
+    ['learn', 'words'] => 'Tra từ',
+    ['learn', 'catalog'] => 'Gói học liệu',
+    ['words', _, 'edit'] => 'Sửa từ riêng',
+    ['words', _] => 'Chi tiết từ',
+    ['saved'] => 'Từ đã lưu',
+    ['personal', 'new'] => 'Thêm từ riêng',
+    ['review', ...] => 'Ôn tập',
+    ['practice'] => 'Luyện tập',
+    ['writing', ...] => 'Viết chữ',
+    ['photos', ...] => 'Chụp chữ',
+    ['conversations', ...] => 'Hội thoại',
+    ['exams', ...] => 'Thi thử',
+    ['progress'] => 'Tiến độ',
+    ['profile', 'edit'] => 'Sửa hồ sơ',
+    ['profile'] => 'Cá nhân',
+    ['settings'] => 'Cài đặt',
+    ['data'] => 'Dữ liệu',
+    ['help'] => 'Hướng dẫn',
+    ['privacy'] => 'Quyền riêng tư',
+    ['permissions'] => 'Quyền thiết bị',
+    ['feedback', ...] => 'Báo lỗi',
+    _ => 'Học tiếng Trung',
+  };
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
@@ -446,8 +475,10 @@ class _LocalShellState extends State<_LocalShell> {
         constraints: const BoxConstraints(maxWidth: 1120),
         child: ListView(
           controller: scroll,
-          padding: EdgeInsets.all(wide ? 32 : 20),
-          children: [widget.child, const SizedBox(height: 40)],
+          padding: wide
+              ? const EdgeInsets.fromLTRB(32, 32, 32, 72)
+              : const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          children: [widget.child],
         ),
       ),
     );
@@ -459,6 +490,8 @@ class _LocalShellState extends State<_LocalShell> {
     );
     return Scaffold(
       appBar: AppBar(
+        centerTitle: wide ? null : false,
+        titleSpacing: wide ? null : (paths.contains(path) ? 20 : 0),
         leading: paths.contains(path)
             ? null
             : BackButton(
@@ -470,19 +503,29 @@ class _LocalShellState extends State<_LocalShell> {
                   }
                 },
               ),
-        title: const Row(
-          children: [
-            BrandMark(),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Hanyu AI',
+        title: wide
+            ? const Row(
+                children: [
+                  BrandMark(),
+                  SizedBox(width: 12),
+                  Expanded(child: Text('Hanyu AI')),
+                ],
+              )
+            : Text(
+                pageTitle,
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+        actions: [
+          if (!wide && path == '/learn')
+            IconButton(
+              tooltip: 'Mở trang cá nhân',
+              onPressed: () => context.go('/profile'),
+              icon: const FigmaIcon(FigmaGlyph.person),
             ),
-          ],
-        ),
+        ],
       ),
       body: SafeArea(
         child: wide

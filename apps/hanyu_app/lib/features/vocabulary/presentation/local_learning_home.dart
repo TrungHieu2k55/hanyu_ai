@@ -6,6 +6,7 @@ import '../../../core/local/local_models.dart';
 import '../../../shared/ui_tokens.dart';
 import '../../../shared/widgets/hanzi_focus.dart';
 import '../../../shared/widgets/learner_surface.dart';
+import '../../../shared/widgets/pronunciation_button.dart';
 import '../../content/application/learning_catalog.dart';
 import '../../progress/domain/local_learning_stats.dart';
 import 'local_vocabulary_screen.dart';
@@ -26,6 +27,18 @@ class LocalLearningHome extends StatelessWidget {
     final featured = words.length < 2
         ? null
         : words.where((w) => w.entry.hanzi == '朋友').firstOrNull ?? words.first;
+    final featuredCard = featured == null
+        ? null
+        : _FeaturedWord(featured, soundEnabled: data.preferences.sound);
+    final wide = MediaQuery.sizeOf(context).width >= 1024;
+    final reviewAndPractice = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _NextReview(data: data),
+        const SizedBox(height: 16),
+        const _PracticeShortcuts(),
+      ],
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -52,24 +65,29 @@ class LocalLearningHome extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 16),
-        if (featured == null) ...[
-          _NextReview(data: data),
-          const SizedBox(height: 16),
-          const _PracticeShortcuts(),
-        ] else
-          LearnerSplit(
-            main: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _NextReview(data: data),
-                const SizedBox(height: 16),
-                const _PracticeShortcuts(),
-              ],
-            ),
-            aside: _FeaturedWord(featured),
-          ),
-        const SizedBox(height: 24),
-        LocalVocabularyScreen(data: data, embedded: true),
+        if (!wide)
+          _NextReview(data: data)
+        else if (featuredCard == null)
+          reviewAndPractice
+        else
+          LearnerSplit(main: reviewAndPractice, aside: featuredCard),
+        SizedBox(height: wide ? 24 : 16),
+        LocalVocabularyScreen(
+          data: data,
+          embedded: true,
+          afterSearch: wide
+              ? null
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _PracticeShortcuts(),
+                    if (featuredCard != null) ...[
+                      const SizedBox(height: 16),
+                      featuredCard,
+                    ],
+                  ],
+                ),
+        ),
       ],
     );
   }
@@ -237,8 +255,9 @@ class _Shortcut extends StatelessWidget {
 }
 
 class _FeaturedWord extends StatelessWidget {
-  const _FeaturedWord(this.word);
+  const _FeaturedWord(this.word, {required this.soundEnabled});
   final LocalWord word;
+  final bool soundEnabled;
   @override
   Widget build(BuildContext context) => LearnerSurface(
     child: Column(
@@ -249,24 +268,35 @@ class _FeaturedWord extends StatelessWidget {
           style: TextStyle(fontSize: 12, letterSpacing: .8, color: brandTeal),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 14,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        Row(
           children: [
-            HanziFocus(word.entry.hanzi, size: 34),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  word.entry.pinyin,
-                  style: const TextStyle(color: brandTeal),
-                ),
-                Text(
-                  word.entry.vietnamese,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ],
+            Expanded(
+              child: Wrap(
+                spacing: 14,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  HanziFocus(word.entry.hanzi, size: 34),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        word.entry.pinyin,
+                        style: const TextStyle(color: brandTeal),
+                      ),
+                      Text(
+                        word.entry.vietnamese,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            PronunciationButton(
+              hanzi: word.entry.hanzi,
+              soundEnabled: soundEnabled,
             ),
           ],
         ),

@@ -1,5 +1,6 @@
 import '../../../shared/widgets/learner_surface.dart';
 import '../../../shared/widgets/hanzi_focus.dart';
+import '../../../shared/widgets/pronunciation_button.dart';
 import '../../support/presentation/report_content_button.dart';
 
 import 'package:flutter/material.dart';
@@ -16,10 +17,12 @@ class LocalWordDetail extends ConsumerStatefulWidget {
   const LocalWordDetail({
     required this.word,
     required this.revision,
+    required this.soundEnabled,
     super.key,
   });
   final LocalWord word;
   final int revision;
+  final bool soundEnabled;
   @override
   ConsumerState<LocalWordDetail> createState() => _LocalWordDetailState();
 }
@@ -114,9 +117,20 @@ class _LocalWordDetailState extends ConsumerState<LocalWordDetail> {
               const SizedBox(height: 12),
               HanziFocus(entry.hanzi),
               const SizedBox(height: 8),
-              Text(
-                entry.pinyin,
-                style: const TextStyle(fontSize: 20, color: brandTeal),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.pinyin,
+                      style: const TextStyle(fontSize: 20, color: brandTeal),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  PronunciationButton(
+                    hanzi: entry.hanzi,
+                    soundEnabled: widget.soundEnabled,
+                  ),
+                ],
               ),
               Text(
                 entry.vietnamese,
