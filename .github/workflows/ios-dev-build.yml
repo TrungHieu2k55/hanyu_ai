@@ -1,0 +1,65 @@
+name: Hanyu AI iOS Dev Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios:
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: apps/hanyu_app
+    env:
+      FLUTTER_VERSION: '3.47.1'
+      FLUTTER_REVISION: '6655482ec06e547f90abf8ae7590466f4415978d'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Flutter and show toolchain versions
+        run: |
+          flutter_sdk="$RUNNER_TEMP/flutter"
+          git clone --depth 1 --branch "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$flutter_sdk"
+          test "$(git -C "$flutter_sdk" rev-parse HEAD)" = "$FLUTTER_REVISION"
+          echo "$flutter_sdk/bin" >> "$GITHUB_PATH"
+          "$flutter_sdk/bin/flutter" --version
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Restore Flutter dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Build unsigned iPhone application
+        run: flutter build ios --release --no-codesign --no-pub
+
+      - name: Package unsigned IPA for local signing
+        run: |
+          app="build/ios/iphoneos/Runner.app"
+          test -f "$app/Info.plist"
+          staging="$(mktemp -d "$RUNNER_TEMP/hanyu-ios.XXXXXX")"
+          mkdir "$staging/Payload"
+          /usr/bin/ditto "$app" "$staging/Payload/Runner.app"
+          ipa="$RUNNER_TEMP/Hanyu-AI-iOS-unsigned.ipa"
+          /usr/bin/ditto -c -k --keepParent "$staging/Payload" "$ipa"
+          /usr/bin/unzip -Z1 "$ipa" | grep -Fx 'Payload/Runner.app/Info.plist'
+
+      - name: Upload unsigned build
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: Hanyu-AI-iOS-unsigned
+          path: ${{ runner.temp }}/Hanyu-AI-iOS-unsigned.ipa
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3

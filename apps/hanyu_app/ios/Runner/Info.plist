@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Doanchuyennganh2</string>
+	<string>Hanyu AI</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,6 +24,12 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Dùng camera để chụp chữ Hán phục vụ bài luyện của bạn.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Chọn ảnh có chữ Hán để mở trong bài luyện của bạn.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ghi âm câu trả lời để bạn nghe lại khi luyện hội thoại.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

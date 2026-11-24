@@ -46,3 +46,36 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# AI experiments: keep code/contracts, exclude private datasets and weights.
+ai/handwriting/data/
+ai/handwriting/runs/
+ai/handwriting/artifacts/
+ai/handwriting/**/__pycache__/
+*.pt
+*.pth
+*.onnx
+
+# Local credentials, device signing, and generated release files.
+.env
+.env.*
+!.env.example
+key.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.mobileprovision
+*.provisionprofile
+*.key
+*.pem
+*.apk
+*.aab
+*.ipa
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
