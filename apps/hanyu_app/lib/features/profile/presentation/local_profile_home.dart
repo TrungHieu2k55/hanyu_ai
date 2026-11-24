@@ -15,8 +15,10 @@ class LocalProfileHome extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Cá nhân', style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 16),
+        if (MediaQuery.sizeOf(context).width >= 1024) ...[
+          Text('Cá nhân', style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 16),
+        ],
         LearnerSurface(
           color: brandInk,
           padding: const EdgeInsets.all(18),

@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:doanchuyennganh2/app/local/local_app.dart';
@@ -40,6 +41,45 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'local word pronunciation requests Mandarin and handles a missing voice',
+    (tester) async {
+      final calls = <MethodCall>[];
+      var languages = ['en-US', 'yue-HK', 'zh-CN'];
+      const channel = MethodChannel('flutter_tts');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        return call.method == 'getLanguages' ? languages : 1;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+      await launch(tester, scale: 1.5);
+      await tapLocal(tester, find.text('Xem mục từ'));
+      final listen = find.byTooltip('Nghe phát âm');
+      await tapLocal(tester, listen);
+
+      expect(
+        calls.singleWhere((c) => c.method == 'setLanguage').arguments,
+        'zh-CN',
+      );
+      final spoken = calls.singleWhere((c) => c.method == 'speak').arguments;
+      expect(find.text(spoken as String), findsOneWidget);
+      expect(tester.getSize(listen).shortestSide, greaterThanOrEqualTo(48));
+
+      languages = ['en-US', 'yue-HK'];
+      await tapLocal(tester, listen);
+      expect(calls.where((c) => c.method == 'speak'), hasLength(1));
+      expect(
+        find.text(
+          'Hãy thêm giọng tiếng Quan thoại trên thiết bị hoặc trình duyệt.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'local vertical slice commits word saved flag and note before app rebuild',

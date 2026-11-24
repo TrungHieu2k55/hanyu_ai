@@ -2,6 +2,7 @@ import 'package:doanchuyennganh2/app/local/local_app.dart';
 import 'package:doanchuyennganh2/app/local/local_providers.dart';
 import 'package:doanchuyennganh2/core/local/drift_local_repository.dart';
 import 'package:doanchuyennganh2/core/local/local_database.dart';
+import 'package:doanchuyennganh2/shared/widgets/brand_mark.dart';
 import 'package:doanchuyennganh2/shared/widgets/figma_icon.dart';
 import 'package:doanchuyennganh2/shared/widgets/learner_navigation_bar.dart';
 import 'package:drift/native.dart';
@@ -29,6 +30,9 @@ void main() {
       );
       tester.view.physicalSize = Size(width, height);
       tester.view.devicePixelRatio = 1;
+      final bottomInset = width == 390 ? 34.0 : 0.0;
+      tester.view.padding = FakeViewPadding(bottom: bottomInset);
+      addTearDown(tester.view.resetPadding);
       tester.platformDispatcher.textScaleFactorTestValue = scale;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -77,6 +81,19 @@ void main() {
         }
       }
       if (width < 1024) {
+        final header = find.byType(AppBar);
+        expect(
+          find.descendant(of: header, matching: find.byType(BrandMark)),
+          findsNothing,
+        );
+        expect(
+          find.descendant(of: header, matching: find.text('Học hôm nay')),
+          findsOneWidget,
+        );
+        expect(
+          tester.getBottomLeft(find.byType(TextField)).dy,
+          lessThan(shortcutBounds.first.top),
+        );
         if (capture && width == 320) {
           expect(tester.getSize(bar).height, lessThanOrEqualTo(100));
         }
@@ -85,6 +102,19 @@ void main() {
           matching: find.byType(FigmaIcon),
         );
         expect(icons, findsNWidgets(5));
+        if (bottomInset > 0) {
+          final labels = find.descendant(of: bar, matching: find.byType(Text));
+          for (final label in labels.evaluate()) {
+            expect(
+              tester
+                  .getBottomLeft(
+                    find.byElementPredicate((element) => element == label),
+                  )
+                  .dy,
+              lessThanOrEqualTo(height - bottomInset),
+            );
+          }
+        }
         final top = tester.getTopLeft(icons.first).dy;
         for (final iconIndex in Iterable<int>.generate(5)) {
           expect(tester.getTopLeft(icons.at(iconIndex)).dy, closeTo(top, .1));

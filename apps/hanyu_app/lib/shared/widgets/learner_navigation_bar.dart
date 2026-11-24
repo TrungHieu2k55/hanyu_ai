@@ -25,7 +25,7 @@ class LearnerNavigationBar extends StatelessWidget {
       top: false,
       bottom: bottom,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 76),
+        constraints: const BoxConstraints(minHeight: 64),
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -77,7 +77,7 @@ class _Destination extends StatelessWidget {
         excludeFromSemantics: true,
         child: ExcludeSemantics(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
             child: Column(
               children: [
                 Ink(
