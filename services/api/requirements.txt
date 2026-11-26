@@ -1,0 +1,9 @@
+fastapi>=0.136,<1
+uvicorn>=0.35,<1
+jsonschema[format-nongpl]>=4.23,<5
+python-multipart>=0.0.20,<1
+PyJWT[crypto]>=2.10,<3
+Pillow>=11.3,<13
+httpx>=0.28,<1
+psycopg[binary]>=3.2,<4
+pypinyin>=0.55,<1
