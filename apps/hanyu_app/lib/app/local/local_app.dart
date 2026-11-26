@@ -1,8 +1,21 @@
 import 'package:doanchuyennganh2/shared/widgets/learner_navigation_bar.dart';
+import 'package:doanchuyennganh2/shared/widgets/learner_web_navigation.dart';
 import 'package:doanchuyennganh2/shared/widgets/status_panel.dart';
 import 'package:doanchuyennganh2/shared/widgets/figma_icon.dart';
 
+import '../../features/auth/presentation/auth_screen.dart';
+import '../../features/extended_learning/study_catalog_screen.dart';
+import '../../features/extended_learning/study_collections_screen.dart';
+import '../../features/extended_learning/study_lesson.dart';
+import '../../features/extended_learning/study_lesson_screen.dart';
+import '../../features/extended_learning/study_progress_screen.dart';
+import '../../features/extended_learning/study_settings_screen.dart';
 import '../../features/practice/presentation/local_practice_home.dart';
+import '../../features/practice/presentation/handwriting_lookup_screen.dart';
+import '../../features/practice/presentation/local_photo_demo.dart';
+import '../../features/writing/data/writing_samples.dart';
+import '../../features/writing/presentation/stroke_guide_screen.dart';
+import '../../features/writing/presentation/stroke_practice_screen.dart';
 import '../../features/profile/presentation/local_profile_home.dart';
 import '../../features/vocabulary/presentation/local_learning_home.dart';
 import '../../features/content/presentation/local_catalog_screen.dart';
@@ -36,12 +49,20 @@ import 'package:doanchuyennganh2/features/vocabulary/presentation/local_word_edi
 import 'package:doanchuyennganh2/features/settings/presentation/local_settings_screen.dart';
 import 'package:doanchuyennganh2/features/settings/presentation/local_data_screen.dart';
 import 'package:doanchuyennganh2/shared/widgets/brand_mark.dart';
+import 'package:doanchuyennganh2/shared/widgets/detail_scaffold.dart';
 import 'package:doanchuyennganh2/shared/ui_tokens.dart';
 
 import 'local_drafts.dart';
 import 'local_providers.dart';
 
 final Provider<GoRouter> localRouterProvider = Provider<GoRouter>((ref) {
+  Widget reviewWorkspace(Widget child, double width) => Align(
+    alignment: Alignment.topLeft,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: width),
+      child: child,
+    ),
+  );
   Widget page(Widget Function(LocalSnapshot data) build) =>
       _LocalDataPage(builder: build);
   GoRoute route(
@@ -70,11 +91,21 @@ final Provider<GoRouter> localRouterProvider = Provider<GoRouter>((ref) {
               ),
             ),
           ),
+          route('/learn/words', (_, state) {
+            final query = state.uri.queryParameters['q'] ?? '';
+            return page(
+              (d) => LocalVocabularyScreen(
+                data: d,
+                initialQuery: query,
+                key: ValueKey(query),
+              ),
+            );
+          }),
           route(
-            '/learn/words',
-            (_, _) => page((d) => LocalVocabularyScreen(data: d)),
+            '/review',
+            (_, _) =>
+                page((d) => reviewWorkspace(LocalReviewLanding(data: d), 620)),
           ),
-          route('/review', (_, _) => page((d) => LocalReviewLanding(data: d))),
           route(
             '/saved',
             (_, _) =>
@@ -86,15 +117,115 @@ final Provider<GoRouter> localRouterProvider = Provider<GoRouter>((ref) {
               final session = d.review.find(state.pathParameters['id']!);
               return session == null
                   ? const Text('Không tìm thấy phiên ôn.')
-                  : LocalReviewScreen(
-                      key: ValueKey(session.id),
-                      session: session,
-                      revision: d.revision,
-                      soundEnabled: d.preferences.sound,
+                  : reviewWorkspace(
+                      LocalReviewScreen(
+                        key: ValueKey(session.id),
+                        session: session,
+                        revision: d.revision,
+                        soundEnabled: d.preferences.sound,
+                      ),
+                      420,
                     );
             }),
           ),
           route('/practice', (_, _) => const LocalPracticeHome()),
+          route(
+            '/practice/handwriting',
+            (_, _) => const HandwritingLookupScreen(),
+          ),
+          route('/practice/strokes', (_, _) => const LocalStrokePicker()),
+          route('/practice/strokes/:character', (context, state) {
+            final sample = writingSamples
+                .where((row) => row.$1 == state.pathParameters['character'])
+                .firstOrNull;
+            if (sample == null) {
+              return const StatusPanel(
+                icon: Icons.edit_off_outlined,
+                title: 'Chưa có mẫu nét',
+                message: 'Quay lại để chọn chữ đang có trong danh sách.',
+              );
+            }
+            return StrokeGuideScreen(
+              hanzi: sample.$1,
+              pinyin: sample.$2,
+              meaning: sample.$3,
+              onPractice: () =>
+                  GoRouter.of(context)
+                      .push('/practice/strokes/person/practice'),
+              onFreeWriting: () =>
+                  GoRouter.of(context).push('/practice/handwriting'),
+            );
+          }),
+          route(
+            '/practice/strokes/person/practice',
+            (context, _) => StrokePracticeScreen(
+              onBackToGuide: () => context.canPop()
+                  ? context.pop()
+                  : context.go('/practice/strokes/${Uri.encodeComponent('人')}'),
+            ),
+          ),
+
+          route('/practice/lessons', (_, _) => const StudyCatalogScreen()),
+          route(
+            '/practice/lessons/:id',
+            (_, state) => page((d) {
+              final id = state.pathParameters['id'];
+              final lesson = studyLessons
+                  .where((item) => item.id == id)
+                  .firstOrNull;
+              if (lesson == null) {
+                return const StatusPanel(
+                  icon: Icons.search_off,
+                  title: 'Không tìm thấy bài',
+                  message: 'Quay lại danh mục để chọn bài khác.',
+                );
+              }
+              return StudyLessonScreen(
+                key: ValueKey(lesson.id),
+                lesson: lesson,
+                soundEnabled: d.preferences.sound,
+              );
+            }),
+          ),
+          route(
+            '/learn/decks',
+            (_, _) => page((d) => StudyCollectionsScreen(snapshot: d)),
+          ),
+          route(
+            '/learn/decks/:id',
+            (_, state) => page(
+              (d) => StudyCollectionsScreen(
+                snapshot: d,
+                deckId: state.pathParameters['id'],
+              ),
+            ),
+          ),
+          route(
+            '/learn/history',
+            (_, _) => page((d) => StudyLookupHistoryScreen(snapshot: d)),
+          ),
+          route(
+            '/progress/goals',
+            (_, _) => page(
+              (d) => StudyGoalsScreen(
+                snapshot: d,
+                now: ref.read(localClockProvider)(),
+              ),
+            ),
+          ),
+          route(
+            '/progress/mistakes',
+            (_, _) => page((d) => StudyMistakesScreen(snapshot: d)),
+          ),
+          route('/profile/reminder', (_, _) => const StudyReminderScreen()),
+          route('/profile/offline', (_, _) => const StudyOfflineScreen()),
+          route(
+            '/profile/offline/:level',
+            (_, state) => StudyOfflinePackScreen(
+              level: int.tryParse(state.pathParameters['level']!),
+            ),
+          ),
+
           for (final kind in PracticeKind.values) ...[
             route(
               practicePathForRoute(kind),
@@ -303,6 +434,21 @@ final Provider<GoRouter> localRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             GuestPreviewScreen(onExit: () => context.go('/profile')),
       ),
+      GoRoute(path: '/profile/account', builder: (_, _) => const AuthScreen()),
+      GoRoute(
+        path: '/preview/handwriting',
+        builder: (_, _) => const DetailScaffold(
+          title: 'Viết tay · Khu xem mẫu',
+          body: HandwritingLookupScreen(preview: true),
+        ),
+      ),
+      GoRoute(
+        path: '/preview/photos',
+        builder: (_, _) => const DetailScaffold(
+          title: 'Đọc ảnh · Khu xem mẫu',
+          body: LocalPhotoDemo(),
+        ),
+      ),
       GoRoute(
         path: '/preview',
         builder: (context, state) => const _PreviewRoute(),
@@ -406,18 +552,16 @@ class _LocalShellState extends State<_LocalShell> {
     super.dispose();
   }
 
-  static const paths = [
-    '/learn',
-    '/review',
-    '/practice',
-    '/progress',
-    '/profile',
-  ];
-  static const labels = ['Học', 'Ôn tập', 'Luyện tập', 'Tiến độ', 'Cá nhân'];
-
   String get pageTitle => switch (path.split('/').skip(1).toList()) {
     ['learn'] => 'Học hôm nay',
     ['learn', 'words'] => 'Tra từ',
+    ['learn', 'decks', ...] => 'Bộ từ tùy chỉnh',
+    ['learn', 'history'] => 'Lịch sử tra cứu',
+    ['practice', 'lessons', ...] => 'Bài luyện',
+    ['progress', 'goals'] => 'Thử thách & huy hiệu',
+    ['progress', 'mistakes'] => 'Sổ lỗi cá nhân',
+    ['profile', 'reminder'] => 'Nhắc lịch học',
+    ['profile', 'offline', ...] => 'Gói bài học offline',
     ['learn', 'catalog'] => 'Gói học liệu',
     ['words', _, 'edit'] => 'Sửa từ riêng',
     ['words', _] => 'Chi tiết từ',
@@ -425,8 +569,13 @@ class _LocalShellState extends State<_LocalShell> {
     ['personal', 'new'] => 'Thêm từ riêng',
     ['review', ...] => 'Ôn tập',
     ['practice'] => 'Luyện tập',
+    ['practice', 'handwriting'] => 'Viết tay để tra chữ',
+    ['practice', 'strokes'] => 'Luyện theo nét',
+    ['practice', 'strokes', 'person', 'practice'] => 'Tập theo nét',
+    ['practice', 'strokes', ...] => 'Thứ tự nét viết',
     ['writing', ...] => 'Viết chữ',
-    ['photos', ...] => 'Chụp chữ',
+    ['photos', 'new'] => 'Chụp ảnh để tra chữ',
+    ['photos', ...] => 'Ảnh và văn bản',
     ['conversations', ...] => 'Hội thoại',
     ['exams', ...] => 'Thi thử',
     ['progress'] => 'Tiến độ',
@@ -451,13 +600,13 @@ class _LocalShellState extends State<_LocalShell> {
             path == '/saved' ||
             path.startsWith('/personal')
         ? 1
-        : (path == '/practice' ||
+        : (path.startsWith('/practice') ||
               path.startsWith('/exams') ||
               path.startsWith('/writing') ||
               path.startsWith('/photos') ||
               path.startsWith('/conversations'))
         ? 2
-        : path == '/progress'
+        : path.startsWith('/progress')
         ? 3
         : (path.startsWith('/profile') ||
               path.startsWith('/feedback') ||
@@ -470,102 +619,148 @@ class _LocalShellState extends State<_LocalShell> {
               ].contains(path))
         ? 4
         : 0;
-    final body = Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1120),
-        child: ListView(
-          controller: scroll,
-          padding: wide
-              ? const EdgeInsets.fromLTRB(32, 32, 32, 72)
-              : const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          children: [widget.child],
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final isHome = path == '/learn';
+    final isTab = learnerPaths.contains(path);
+    final focusedTask =
+        path.startsWith('/practice/') ||
+        path.startsWith('/review/session/') ||
+        path == '/photos/new';
+    void back() {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go(_backLocation(selected));
+      }
+    }
+
+    final body = SafeArea(
+      top: false,
+      bottom: wide || medium || focusedTask || keyboardOpen,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: ListView(
+            controller: scroll,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: wide
+                ? const EdgeInsets.fromLTRB(28, 32, 28, 32)
+                : const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            children: [
+              if ((wide || medium) && !isTab && !focusedTask)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: BackButton(onPressed: back),
+                ),
+              widget.child,
+            ],
+          ),
         ),
       ),
     );
-    final navigation = LearnerNavigationBar(
-      labels: labels,
+    void navigate(String target) => context.go(target);
+    final browserNavigation = LearnerWebNavigation(
       selectedIndex: selected,
-      onSelected: (i) => context.go(paths[i]),
-      bottom: !medium,
+      path: path,
+      navigate: navigate,
+      compact: medium,
+    );
+    final theme = Theme.of(context);
+    final titleStyle = theme.textTheme.titleMedium!.copyWith(
+      fontWeight: FontWeight.w700,
+    );
+    final titleWidth =
+        (width -
+                (isHome
+                    ? 117
+                    : isTab
+                    ? 40
+                    : 80))
+            .clamp(1.0, double.infinity);
+    final painter = TextPainter(
+      text: TextSpan(text: pageTitle, style: titleStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: isHome ? 1 : 2,
+    )..layout(maxWidth: titleWidth);
+    final toolbarHeight = (painter.height + 20)
+        .clamp(64.0, double.infinity)
+        .toDouble();
+    painter.dispose();
+    final title = Text(
+      pageTitle,
+      style: titleStyle,
+      maxLines: isHome ? 1 : 2,
+      overflow: TextOverflow.ellipsis,
     );
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: wide ? null : false,
-        titleSpacing: wide ? null : (paths.contains(path) ? 20 : 0),
-        leading: paths.contains(path)
-            ? null
-            : BackButton(
-                onPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go(paths[selected]);
-                  }
-                },
-              ),
-        title: wide
-            ? const Row(
-                children: [
-                  BrandMark(),
-                  SizedBox(width: 12),
-                  Expanded(child: Text('Hanyu AI')),
-                ],
-              )
-            : Text(
-                pageTitle,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-        actions: [
-          if (!wide && path == '/learn')
-            IconButton(
-              tooltip: 'Mở trang cá nhân',
-              onPressed: () => context.go('/profile'),
-              icon: const FigmaIcon(FigmaGlyph.person),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: wide
-            ? Row(
-                children: [
-                  NavigationRail(
-                    extended: true,
-                    minExtendedWidth: 190,
-                    selectedIndex: selected,
-                    onDestinationSelected: (i) => context.go(paths[i]),
-                    destinations: [
-                      for (var i = 0; i < 5; i++)
-                        NavigationRailDestination(
-                          icon: FigmaIcon(
-                            learnerNavigationGlyphs[i],
-                            color: mutedText,
-                          ),
-                          selectedIcon: FigmaIcon(
-                            learnerNavigationGlyphs[i],
-                            color: brandTeal,
-                          ),
-                          label: Text(labels[i]),
-                        ),
-                    ],
+      appBar: wide || medium
+          ? null
+          : AppBar(
+              toolbarHeight: toolbarHeight,
+              centerTitle: false,
+              titleSpacing: isTab ? 20 : 4,
+              leadingWidth: 64,
+              leading: isTab ? null : BackButton(onPressed: back),
+              title: isHome
+                  ? Row(
+                      children: [
+                        const BrandMark(),
+                        const SizedBox(width: 10),
+                        Expanded(child: title),
+                      ],
+                    )
+                  : title,
+              actions: [
+                if (isHome)
+                  IconButton(
+                    tooltip: 'Mở trang cá nhân',
+                    onPressed: () => navigate('/profile'),
+                    icon: const FigmaIcon(FigmaGlyph.person),
                   ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: body),
-                ],
-              )
-            : medium
-            ? Column(
+              ],
+            ),
+      body: wide
+          ? SafeArea(
+              bottom: false,
+              child: FocusTraversalGroup(
+                policy: WidgetOrderTraversalPolicy(),
+                child: Row(
+                  children: [
+                    browserNavigation,
+                    Expanded(child: body),
+                  ],
+                ),
+              ),
+            )
+          : medium
+          ? SafeArea(
+              bottom: false,
+              child: Column(
                 children: [
-                  navigation,
+                  if (!keyboardOpen) browserNavigation,
                   Expanded(child: body),
                 ],
-              )
-            : body,
-      ),
-      bottomNavigationBar: wide || medium ? null : navigation,
+              ),
+            )
+          : body,
+      bottomNavigationBar: wide || medium || focusedTask || keyboardOpen
+          ? null
+          : LearnerNavigationBar(
+              labels: learnerLabels,
+              selectedIndex: selected,
+              onSelected: (i) => navigate(learnerPaths[i]),
+            ),
     );
+  }
+
+  String _backLocation(int selected) {
+    if (path.startsWith('/practice/lessons/')) return '/practice/lessons';
+    if (path == '/practice/strokes/person/practice') {
+      return '/practice/strokes/${Uri.encodeComponent('人')}';
+    }
+    if (path.startsWith('/practice/strokes/')) return '/practice/strokes';
+    return learnerPaths[selected];
   }
 }
 

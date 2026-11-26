@@ -1,3 +1,4 @@
+import '../../features/extended_learning/study_preview.dart';
 import 'learning_catalog_store.dart';
 import '../files/local_file_transfer.dart';
 import '../../features/support/domain/local_feedback.dart';
@@ -17,6 +18,10 @@ import 'package:doanchuyennganh2/features/vocabulary/domain/vocabulary_item.dart
 
 abstract interface class LocalRepository {
   Future<LocalSnapshot> load();
+  Future<StudyPreview> loadStudyPreview();
+  Future<StudyPreview> updateStudyPreview(
+    StudyPreview Function(StudyPreview) change,
+  );
   Future<CatalogInstallPreview> preparePackageInstall(LocalJsonFile file);
   Future<LocalSnapshot> installPackage(
     CatalogInstallPreview preview, {

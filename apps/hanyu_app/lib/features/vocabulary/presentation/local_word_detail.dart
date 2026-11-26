@@ -98,6 +98,7 @@ class _LocalWordDetailState extends ConsumerState<LocalWordDetail> {
     drafts.update(this, changed: dirty, saving: busy);
     final word = widget.word;
     final entry = word.entry;
+    final example = entry.exampleHanzi.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -144,7 +145,8 @@ class _LocalWordDetailState extends ConsumerState<LocalWordDetail> {
             ],
           ),
         ),
-        if (entry.exampleHanzi.isNotEmpty) ...[
+        if (example.isNotEmpty ||
+            entry.exampleVietnamese.trim().isNotEmpty) ...[
           const SizedBox(height: 16),
           LearnerSurface(
             child: Column(
@@ -155,8 +157,25 @@ class _LocalWordDetailState extends ConsumerState<LocalWordDetail> {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
-                Text(entry.exampleHanzi, style: const TextStyle(fontSize: 21)),
-                Text(entry.exampleVietnamese),
+                if (example.isNotEmpty)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          example,
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PronunciationButton(
+                        hanzi: example,
+                        soundEnabled: widget.soundEnabled,
+                        label: 'Nghe câu ví dụ',
+                      ),
+                    ],
+                  ),
+                if (entry.exampleVietnamese.trim().isNotEmpty)
+                  Text(entry.exampleVietnamese),
               ],
             ),
           ),

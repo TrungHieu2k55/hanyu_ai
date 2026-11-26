@@ -187,8 +187,8 @@ class _NextReview extends StatelessWidget {
 class _PracticeShortcuts extends StatelessWidget {
   const _PracticeShortcuts();
   static const shortcuts = [
-    (FigmaGlyph.practice, 'Viết chữ', '/writing'),
-    (FigmaGlyph.camera, 'Chụp chữ', '/photos'),
+    (FigmaGlyph.practice, 'Viết chữ', '/practice/strokes'),
+    (FigmaGlyph.camera, 'Chụp chữ', '/photos/new'),
     (FigmaGlyph.conversation, 'Hội thoại', '/conversations'),
     (FigmaGlyph.headphones, 'Thi thử', '/exams'),
   ];

@@ -1,3 +1,4 @@
+import 'package:doanchuyennganh2/shared/widgets/learner_web_navigation.dart';
 import 'package:doanchuyennganh2/app/local/local_app.dart';
 import 'package:doanchuyennganh2/app/local/local_providers.dart';
 import 'package:doanchuyennganh2/core/local/drift_local_repository.dart';
@@ -56,10 +57,10 @@ void main() {
       expect(find.text('Học đều, nhớ lâu.'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      final rail = find.byType(NavigationRail);
+      final rail = find.byType(LearnerWebNavigation);
       final bar = find.byType(LearnerNavigationBar);
-      expect(rail, width >= 1024 ? findsOneWidget : findsNothing);
-      expect(bar, width >= 1024 ? findsNothing : findsOneWidget);
+      expect(rail, width >= 760 ? findsOneWidget : findsNothing);
+      expect(bar, width >= 760 ? findsNothing : findsOneWidget);
       final shortcutBounds = [
         for (final label in ['Viết chữ', 'Chụp chữ', 'Hội thoại', 'Thi thử'])
           tester.getRect(find.widgetWithText(OutlinedButton, label)),
@@ -80,11 +81,11 @@ void main() {
           );
         }
       }
-      if (width < 1024) {
+      if (width < 760) {
         final header = find.byType(AppBar);
         expect(
           find.descendant(of: header, matching: find.byType(BrandMark)),
-          findsNothing,
+          findsOneWidget,
         );
         expect(
           find.descendant(of: header, matching: find.text('Học hôm nay')),
@@ -102,9 +103,19 @@ void main() {
           matching: find.byType(FigmaIcon),
         );
         expect(icons, findsNWidgets(5));
+        final tabLabels = find.descendant(of: bar, matching: find.byType(Text));
+        expect(tabLabels, findsNWidgets(5));
+        final labelTop = tester.getTopLeft(tabLabels.first).dy;
+        for (var index = 0; index < 5; index++) {
+          final label = tabLabels.at(index);
+          final text = tester.widget<Text>(label);
+          final scaler = MediaQuery.textScalerOf(tester.element(label));
+          expect(text.textScaler, isNull);
+          expect(scaler.scale(12), closeTo(12 * scale, .1));
+          expect(tester.getTopLeft(label).dy, closeTo(labelTop, .1));
+        }
         if (bottomInset > 0) {
-          final labels = find.descendant(of: bar, matching: find.byType(Text));
-          for (final label in labels.evaluate()) {
+          for (final label in tabLabels.evaluate()) {
             expect(
               tester
                   .getBottomLeft(
@@ -131,7 +142,7 @@ void main() {
       for (final tab in ['Tiến độ', 'Cá nhân']) {
         await tester.tap(
           find.descendant(
-            of: width >= 1024 ? rail : bar,
+            of: width >= 760 ? rail : bar,
             matching: find.text(tab),
           ),
         );

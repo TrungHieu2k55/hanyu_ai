@@ -73,6 +73,8 @@ try {
   await db.exec(await readFile(ocrDictionary, "utf8"));
   const ttsStaging = new URL("../../../supabase/migrations/202611260002_tts_staging.sql", import.meta.url);
   await db.exec(await readFile(ttsStaging, "utf8"));
+  const studyMigration = new URL("../../../supabase/migrations/202611260003_extended_learning.sql", import.meta.url);
+  await db.exec(await readFile(studyMigration, "utf8"));
   console.log("Backend migrations applied to local PGlite fixture");
 
   server = new PGLiteSocketServer({db, port, host:"127.0.0.1", maxConnections:16});

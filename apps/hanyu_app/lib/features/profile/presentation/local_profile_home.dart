@@ -58,6 +58,18 @@ class LocalProfileHome extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        const _ProfileGroup(
+          title: 'Tài khoản',
+          items: [
+            (
+              Icons.person_outline,
+              'Đăng nhập / Đăng ký',
+              'Xem thử luồng tài khoản',
+              '/profile/account',
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         LearnerSplit(
           main: _ProfileGroup(
             title: 'Học tập & cài đặt',
@@ -67,6 +79,12 @@ class LocalProfileHome extends StatelessWidget {
                 'Mục tiêu và âm thanh',
                 'HSK ${data.preferences.level} · ${data.preferences.minutes} phút mỗi ngày',
                 '/settings',
+              ),
+              (
+                Icons.notifications_none_outlined,
+                'Nhắc lịch học',
+                'Chọn ngày và giờ học',
+                '/profile/reminder',
               ),
               (
                 Icons.phonelink_lock_outlined,
@@ -83,7 +101,7 @@ class LocalProfileHome extends StatelessWidget {
               (
                 Icons.preview_outlined,
                 'Khu xem mẫu',
-                'Tài khoản và các luồng thực hành mẫu',
+                'Xem các luồng thực hành mẫu',
                 '/preview',
               ),
             ],
@@ -91,6 +109,12 @@ class LocalProfileHome extends StatelessWidget {
           aside: _ProfileGroup(
             title: 'Dữ liệu & trợ giúp',
             items: [
+              (
+                Icons.download_outlined,
+                'Gói bài học offline',
+                'Lưu gói mẫu trên thiết bị',
+                '/profile/offline',
+              ),
               (
                 Icons.storage_outlined,
                 'Dữ liệu và backup',

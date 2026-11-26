@@ -49,7 +49,7 @@ void main() {
 
   Future<void> openInstructions(WidgetTester tester) async {
     await tapExam(tester, 'Luyện tập');
-    await tapExam(tester, 'Thi thử và luyện đọc');
+    await tapExam(tester, 'Thi thử');
     await tapExam(tester, 'Luyện 10 câu đọc · cấp 1');
   }
 
@@ -79,7 +79,7 @@ void main() {
       await tester.pumpAndSettle();
       await launch(tester);
       await tapExam(tester, 'Luyện tập');
-      await tapExam(tester, 'Thi thử và luyện đọc');
+      await tapExam(tester, 'Thi thử');
       await tapExam(tester, 'Tiếp tục bài đọc · cấp 1');
       expect(find.text('Luyện đọc · câu 2/10'), findsOneWidget);
       expect(
@@ -137,7 +137,7 @@ void main() {
     (tester) async {
       await launch(tester);
       await tapExam(tester, 'Luyện tập');
-      await tapExam(tester, 'Thi thử và luyện đọc');
+      await tapExam(tester, 'Thi thử');
       await tapExam(tester, 'Bộ nháp định hướng cấp 1');
       await tapExam(tester, 'Câu 1 · Nghe · thiếu audio');
       expect(find.textContaining('Bản chữ dự thảo:'), findsOneWidget);
