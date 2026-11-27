@@ -1,9 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../ui_tokens.dart';
 import 'figma_icon.dart';
 
-/// Keeps icons on one baseline while destination labels wrap independently.
+/// Keeps destination icons aligned while labels follow system text scaling.
 class LearnerNavigationBar extends StatelessWidget {
   const LearnerNavigationBar({
     required this.labels,
@@ -24,24 +26,51 @@ class LearnerNavigationBar extends StatelessWidget {
     child: SafeArea(
       top: false,
       bottom: bottom,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 64),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (index, label) in labels.indexed)
-                Expanded(
-                  child: _Destination(
-                    glyph: learnerNavigationGlyphs[index],
-                    label: label,
-                    selected: selectedIndex == index,
-                    onTap: () => onSelected(index),
-                  ),
-                ),
-            ],
-          ),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final labelStyle = Theme.of(context).textTheme.labelMedium!
+              .copyWith(height: 1.2);
+          const horizontalInset = 2.0;
+          final labelWidth =
+              constraints.maxWidth / labels.length - 2 * horizontalInset;
+          final painter = TextPainter(
+            textDirection: Directionality.of(context),
+            textScaler: MediaQuery.textScalerOf(context),
+          );
+          final inheritedStyle = DefaultTextStyle.of(context).style;
+          var labelHeight = 0.0;
+          for (final label in labels) {
+            painter.text = TextSpan(
+              text: label,
+              style: inheritedStyle.merge(labelStyle),
+            );
+            painter.layout(maxWidth: labelWidth);
+            labelHeight = math.max(labelHeight, painter.height);
+          }
+          painter.dispose();
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 58),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (index, label) in labels.indexed)
+                    Expanded(
+                      child: _Destination(
+                        glyph: learnerNavigationGlyphs[index],
+                        label: label,
+                        labelStyle: labelStyle,
+                        labelHeight: labelHeight,
+                        horizontalInset: horizontalInset,
+                        selected: selectedIndex == index,
+                        onTap: () => onSelected(index),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     ),
   );
@@ -53,19 +82,22 @@ class _Destination extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    required this.labelStyle,
+    required this.labelHeight,
+    required this.horizontalInset,
   });
 
   final FigmaGlyph glyph;
   final String label;
+  final TextStyle labelStyle;
+  final double labelHeight;
+  final double horizontalInset;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = selected ? brandTeal : mutedText;
-    // Keep five tab labels readable on a narrow screen at maximum system text.
-    final labelScaler = MediaQuery.textScalerOf(context)
-        .clamp(maxScaleFactor: 1.5);
     return Semantics(
       container: true,
       label: label,
@@ -77,12 +109,16 @@ class _Destination extends StatelessWidget {
         excludeFromSemantics: true,
         child: ExcludeSemantics(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalInset,
+              vertical: 3,
+            ),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Ink(
                   width: 64,
-                  height: 32,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: selected ? softSurface : Colors.transparent,
                     borderRadius: BorderRadius.circular(16),
@@ -95,12 +131,16 @@ class _Destination extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  textScaler: labelScaler,
-                  style: Theme.of(context).textTheme.labelMedium
-                      ?.copyWith(height: 1.2, color: color),
+                SizedBox(
+                  height: labelHeight,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: labelStyle.copyWith(color: color),
+                    ),
+                  ),
                 ),
               ],
             ),

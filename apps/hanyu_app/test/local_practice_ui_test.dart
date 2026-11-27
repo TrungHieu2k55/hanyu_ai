@@ -214,13 +214,13 @@ void main() {
       c.read(localRouterProvider).go('/photos/new');
       await tester.pumpAndSettle();
       picker.canceled = true;
-      await pressPractice(tester, 'Chọn ảnh thật');
+      await pressPractice(tester, 'Chọn từ thư viện ảnh');
       expect((await repo.load()).practice, isEmpty);
       picker.canceled = false;
-      await pressPractice(tester, 'Chọn ảnh thật');
+      await pressPractice(tester, 'Chọn từ thư viện ảnh');
       await pressPractice(tester, 'Hủy ảnh xem trước');
       expect((await repo.load()).media, isEmpty);
-      await pressPractice(tester, 'Chọn ảnh thật');
+      await pressPractice(tester, 'Chọn từ thư viện ảnh');
       await pressPractice(tester, 'Dùng ảnh này');
       await tester.enterText(find.byType(TextField), '你好');
       await tester.pumpAndSettle();
@@ -297,7 +297,7 @@ void main() {
     await tester.pumpAndSettle();
     picker.cameraDenied = true;
     await tester.enterText(find.byType(TextField), '朋友');
-    await pressPractice(tester, 'Chụp ảnh');
+    await pressPractice(tester, 'Chụp ảnh bằng camera');
     expect(find.text('Chưa có quyền mở nguồn ảnh'), findsOneWidget);
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller!.text,

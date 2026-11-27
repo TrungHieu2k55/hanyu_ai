@@ -1,5 +1,7 @@
 import asyncio
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from time import time
 from uuid import uuid4
 
@@ -13,6 +15,7 @@ from app.deletion_worker import purge_one
 from app.main import create_app
 from app.ports import Identity
 from app.postgres import Database
+from app.smoke import LEARNER_PATHS, run_checks
 
 TRAINING = "training-dev-v1"
 POLICIES = {
@@ -125,6 +128,15 @@ class AccountsPostgresTests(unittest.TestCase):
             {"terms": True, "training_handwriting": False},
         )
         self.assertEqual(self.upload(self.client).status_code, 202)
+
+    def test_smoke_reads_learner_routes_for_bootstrapped_account(self):
+        self.assertEqual(self.boot().status_code, 201)
+        output = StringIO()
+        with redirect_stdout(output):
+            result = run_checks(self.client, token="a")
+        self.assertEqual(result, 0, output.getvalue())
+        for path in LEARNER_PATHS:
+            self.assertIn(f"PASS GET {path}: HTTP 200", output.getvalue())
 
     def test_profile_bootstrap_replay_and_new_intent_do_not_overwrite(self):
         key = uuid4()

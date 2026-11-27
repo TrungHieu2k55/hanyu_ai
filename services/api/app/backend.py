@@ -4,7 +4,7 @@ from .accounts import Accounts, policies_from_env
 from .admin_content import AdminContent
 from .admin_import import AdminImport
 from .cnn import HandwritingCnn, Model, model_from_env
-from .conversation import ConversationJobs, conversation_models
+from .conversation import ConversationJobs, GeminiConversation, conversation_models
 from .deletions import Deletions
 from .errors import ApiError
 from .exams import Exams
@@ -17,6 +17,8 @@ from .progress import Progress
 from .reviews import Reviews
 from .roleplay import Roleplay
 from .storage import LEARNING_BUCKET, ImageStorage, SupabaseImageStorage
+from .study_curriculum import StudyCurriculum
+from .study_tools import StudyTools
 from .tts import SpeechProvider, Tts, speech_from_env
 from .vocabulary import Vocabulary
 from .writing import Writing
@@ -34,6 +36,7 @@ class PostgresBackend(UnconfiguredBackend):
         cnn_model: Model | None = None,
         speech_provider: SpeechProvider | None = None,
         deletion_enabled: bool = False,
+        study_transcriber: GeminiConversation | None = None,
         live_conversation_models: dict | None = None,
     ):
         self.ready = bool(
@@ -64,6 +67,14 @@ class PostgresBackend(UnconfiguredBackend):
         )
         self.deletions = Deletions(db, self.accounts, deletion_enabled)
         self.tts = Tts(db, self.accounts, learning_storage, speech_provider)
+        self.study = StudyCurriculum(
+            db,
+            self.accounts,
+            self.tts,
+            study_transcriber,
+            (live_conversation_models or {}).get("transcription"),
+        )
+        self.study_tools = StudyTools(db, self.accounts)
         self.ocr = OcrService(
             db, self.accounts, storage, models or {}, learning_storage
         )
@@ -77,7 +88,8 @@ class PostgresBackend(UnconfiguredBackend):
                 model = await self.cnn.published(tx)
                 migration = await one(
                     tx,
-                    "SELECT to_regprocedure('app_private.ocr_lexicon()') IS NOT NULL AS ready",
+                    """SELECT to_regprocedure('app_private.ocr_lexicon()') IS NOT NULL
+                       AND to_regclass('app.study_lessons') IS NOT NULL AS ready""",
                 )
                 return model is not None and migration["ready"]
         except ApiError:
@@ -91,6 +103,26 @@ class PostgresBackend(UnconfiguredBackend):
 
     def _operation_handlers(self):
         return {
+            "listStudyLessons": self.study.list_lessons,
+            "getStudyLesson": self.study.get_lesson,
+            "submitStudyAttempt": self.study.submit,
+            "studyLessonAudio": self.study.audio,
+            "transcribeStudySpeech": self.study.transcribe,
+            "getStudyOfflinePack": self.study.offline_pack,
+            "listStudyDecks": self.study_tools.list_decks,
+            "getStudyDeck": self.study_tools.get_deck,
+            "putStudyDeck": self.study_tools.put_deck,
+            "deleteStudyDeck": self.study_tools.delete_deck,
+            "putStudyDeckItem": self.study_tools.put_deck_item,
+            "deleteStudyDeckItem": self.study_tools.delete_deck_item,
+            "searchStudyDictionary": self.vocabulary.dictionary,
+            "listStudyLookups": self.study_tools.lookup_history,
+            "recordStudyLookup": self.study_tools.record_lookup,
+            "clearStudyLookups": self.study_tools.clear_lookups,
+            "listStudyMistakes": self.study_tools.mistakes,
+            "getStudyGoals": self.study_tools.goals,
+            "getStudyReminder": self.study_tools.get_reminder,
+            "putStudyReminder": self.study_tools.put_reminder,
             "listVocabulary": self.vocabulary.words,
             "getVocabulary": self.vocabulary.word,
             "listLearningItems": self.vocabulary.items,
@@ -210,6 +242,7 @@ def postgres_backend_from_env() -> PostgresBackend | UnconfiguredBackend:
         raise ValueError(
             "PostgreSQL backend requires the Supabase URL, Storage key, a signing key of at least 32 bytes and current terms version"
         )
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     return PostgresBackend(
         Database(dsn, key.encode(), terms),
         SupabaseImageStorage(url, storage),
@@ -220,4 +253,5 @@ def postgres_backend_from_env() -> PostgresBackend | UnconfiguredBackend:
         speech_provider=speech_from_env(),
         deletion_enabled=os.getenv("HANYU_DELETION_ENABLED") == "1",
         live_conversation_models=conversation_models(),
+        study_transcriber=GeminiConversation(gemini_key) if gemini_key else None,
     )

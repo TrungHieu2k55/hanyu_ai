@@ -14,11 +14,14 @@ class RecordingControls extends ConsumerStatefulWidget {
     required this.onRecording,
     required this.onRecorded,
     this.enabled = true,
+    this.recordedMessage =
+        'Bản thu tạm đã sẵn sàng. Nghe lại rồi lưu bản nháp.',
     super.key,
   });
   final ValueChanged<bool> onRecording;
   final ValueChanged<LocalMediaInput> onRecorded;
   final bool enabled;
+  final String recordedMessage;
   @override
   ConsumerState<RecordingControls> createState() => _RecordingControlsState();
 }
@@ -109,8 +112,7 @@ class _RecordingControlsState extends ConsumerState<RecordingControls>
               ? 'Đã hủy bản thu tạm.'
               : input == null
               ? 'Chưa có âm thanh thu được. Hãy thử lại hoặc nhập văn bản.'
-              : recorder.interruption ??
-                    'Bản thu tạm đã sẵn sàng. Nghe lại rồi lưu bản nháp.',
+              : recorder.interruption ?? widget.recordedMessage,
         );
       }
     } catch (_) {

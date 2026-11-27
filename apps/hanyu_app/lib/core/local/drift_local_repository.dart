@@ -1,3 +1,4 @@
+import '../../features/extended_learning/study_preview.dart';
 import '../../features/content/application/learning_catalog.dart';
 import '../../features/content/domain/content_package.dart';
 import '../../features/content/domain/installed_catalog.dart';
@@ -53,6 +54,25 @@ class DriftLocalRepository implements LocalRepository {
         LocalMetadataCompanion.insert(key: key, value: value),
       );
 
+  static const _studyKey = 'expanded-study-v1';
+
+  @override
+  Future<StudyPreview> loadStudyPreview() async {
+    final raw = await _meta(_studyKey);
+    return raw == null
+        ? const StudyPreview()
+        : StudyPreview.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+  }
+
+  @override
+  Future<StudyPreview> updateStudyPreview(
+    StudyPreview Function(StudyPreview) change,
+  ) => db.transaction(() async {
+    final next = change(await loadStudyPreview());
+    await _setMeta(_studyKey, jsonEncode(next.toJson()));
+    return next;
+  });
+
   Future<void> _seed() => db.transaction(() async {
     if (await _meta('seed') != null) return;
     for (final word in sampleVocabulary) {
@@ -85,6 +105,7 @@ class DriftLocalRepository implements LocalRepository {
     final p = jsonDecode((await _meta('preferences'))!) as Map<String, dynamic>;
     final catalog = await catalogStore.load();
     final managed = LearningCatalogStore.definitions(catalog);
+    final samples = {for (final word in sampleVocabulary) word.id: word};
     return LocalSnapshot(
       catalog: catalog,
       words: rows
@@ -93,7 +114,10 @@ class DriftLocalRepository implements LocalRepository {
               managed[w.id] == null
                   ? VocabularyItem(
                       id: w.id,
-                      level: null,
+                      level: w.personal ? null : samples[w.id]?.level,
+                      partOfSpeech: w.personal
+                          ? null
+                          : samples[w.id]?.partOfSpeech,
                       hanzi: w.hanzi,
                       pinyin: w.pinyin,
                       vietnamese: w.meaning,

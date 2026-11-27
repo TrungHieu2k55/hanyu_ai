@@ -14,6 +14,7 @@ async def clean_batch(
     learning_storage: ImageStorage | None = None,
 ) -> tuple[int, int]:
     async with db.transaction() as tx:
+        await tx.execute("SELECT app_private.purge_study_speech()")
         pending = await many(
             tx, "SELECT * FROM app_private.claim_ocr_media_cleanup(%s)", (limit,)
         )

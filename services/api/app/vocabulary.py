@@ -138,17 +138,26 @@ class Vocabulary:
             )
         return {"items": [project(r) for r in rows[:limit]], "next_cursor": cursor}
 
-    async def words(self, call: Call) -> Result:
+    async def dictionary(self, call: Call) -> Result:
+        return await self.words(call, advanced=True)
+
+    async def words(self, call: Call, *, advanced: bool = False) -> Result:
         query = clean_text(call.query.get("q"))
         pinyin, meaning = vocabulary_search_terms(query)
         level = call.query.get("hsk_level")
         limit = call.query.get("limit", 20)
-        scope = self._scope(call, "vocabulary-v2")
+        scope = self._scope(
+            call, "advanced-dictionary" if advanced else "vocabulary-v2"
+        )
+        part = clean_text(call.query.get("part_of_speech"))
+        with_examples = bool(call.query.get("with_examples", 0))
         after = self.db.read_vocabulary_cursor(scope, call.query.get("cursor"))
         sql = (
             "WITH words AS ("
             + _WORD
-            + " WHERE (%s::smallint IS NULL OR r.hsk_level = %s)),"
+            + " WHERE (%s::smallint IS NULL OR r.hsk_level = %s)"
+            " AND (%s::text IS NULL OR lower(r.part_of_speech)=lower(%s))"
+            " AND (NOT %s OR jsonb_array_length(r.examples)>0)),"
             " q AS (SELECT %s::text AS han, %s::text AS pinyin, %s::text AS meaning, %s::text AS marks),"
             " ranked AS (SELECT words.*, "
             + _MATCH_TIER
@@ -159,6 +168,9 @@ class Vocabulary:
             call.identity.user_id,
             level,
             level,
+            part,
+            part,
+            with_examples,
             query,
             pinyin,
             meaning,

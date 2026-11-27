@@ -7,11 +7,13 @@ class PronunciationButton extends StatefulWidget {
   const PronunciationButton({
     required this.hanzi,
     required this.soundEnabled,
+    this.label = 'Nghe phát âm',
     super.key,
   });
 
   final String hanzi;
   final bool soundEnabled;
+  final String label;
 
   @override
   State<PronunciationButton> createState() => _PronunciationButtonState();
@@ -58,7 +60,7 @@ class _PronunciationButtonState extends State<PronunciationButton> {
       minimumSize: const Size.square(48),
       visualDensity: VisualDensity.standard,
     ),
-    tooltip: _playing ? 'Đang phát âm' : 'Nghe phát âm',
+    tooltip: _playing ? 'Đang phát âm' : widget.label,
     onPressed: _playing ? null : _play,
     icon: _playing
         ? const SizedBox.square(

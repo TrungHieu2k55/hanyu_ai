@@ -20,12 +20,13 @@ class LocalReviewLanding extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final active = data.review.active;
+    final savedWords = data.words.where((word) => word.saved);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         buildPageTitle(
-          'Nhớ lâu, học nhẹ.',
-          'Ôn từ đến hạn theo SM-2. Lịch và phiên đang dở được lưu trên thiết bị.',
+          'Ôn tập hôm nay',
+          'Ôn những từ đã đến hạn trong bộ của bạn.',
         ),
         const SizedBox(height: 24),
         LearnerSurface(
@@ -47,7 +48,7 @@ class LocalReviewLanding extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 FilledButton(
-                  onPressed: () => context.push('/review/session/${active.id}'),
+                  onPressed: () => context.go('/review/session/${active.id}'),
                   child: const Text('Tiếp tục phiên ôn'),
                 ),
               ] else if (data.review.dueCount > 0)
@@ -70,28 +71,42 @@ class LocalReviewLanding extends ConsumerWidget {
                         .review
                         .active;
                     if (session != null) {
-                      context.push('/review/session/${session.id}');
+                      context.go('/review/session/${session.id}');
                     }
                   },
                 )
-              else
-                const Text(
-                  'Chưa có từ đến hạn. Có thể xem lại bộ từ; xem lại không thay lịch ôn.',
+              else ...[
+                Text(
+                  savedWords.isEmpty
+                      ? 'Mở từ điển và lưu từ để bắt đầu ôn tập.'
+                      : 'Chưa có từ đến hạn. Xem lại từ đã lưu không đổi lịch ôn.',
                 ),
+                if (savedWords.isEmpty) ...[
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () => context.push('/learn/words'),
+                    child: const Text('Mở từ điển'),
+                  ),
+                ],
+              ],
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        AsyncCommitButton(
-          label: 'Cập nhật hạn ôn',
-          intentKey: 'refresh:${data.revision}',
-          onCommit: (_) => ref.read(localControllerProvider.notifier).reload(),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(
-          onPressed: () => context.push('/saved'),
-          child: const Text('Quản lý từ đã lưu'),
-        ),
+        if (savedWords.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () => context.push('/saved'),
+            child: const Text('Quản lý từ đã lưu'),
+          ),
+          const SizedBox(height: 8),
+          AsyncCommitButton(
+            label: 'Cập nhật hạn ôn',
+            intentKey: 'refresh:${data.revision}',
+            onCommit: (_) =>
+                ref.read(localControllerProvider.notifier).reload(),
+            compact: true,
+          ),
+        ],
         const SizedBox(height: 24),
         Text('${data.review.eventCount} lượt tự đánh giá đã lưu'),
         const SizedBox(height: 16),
@@ -101,11 +116,13 @@ class LocalReviewLanding extends ConsumerWidget {
             title: Text('Phiên ôn · ${session.cards.length} thẻ'),
             subtitle: Text('Đã hoàn thành · ${session.createdAt.toLocal()}'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/review/session/${session.id}'),
+            onTap: () => context.go('/review/session/${session.id}'),
           ),
-        const SizedBox(height: 24),
-        buildSectionHeading('Từ trong bộ ôn'),
-        for (final word in data.words.where((w) => w.saved))
+        if (savedWords.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          buildSectionHeading('Từ trong bộ ôn'),
+        ],
+        for (final word in savedWords)
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(word.entry.hanzi, style: const TextStyle(fontSize: 24)),
@@ -144,7 +161,7 @@ class _LocalReviewScreenState extends ConsumerState<LocalReviewScreen> {
         children: [
           buildPageTitle(
             'Đã hoàn thành phiên ôn',
-            '${session.cards.length} lượt tự đánh giá đã lưu. Đây không phải tỷ lệ đúng hay điểm năng lực.',
+            '${session.cards.length} / ${session.cards.length} thẻ đã ôn. Đã lưu mức nhớ và cập nhật lịch ôn.',
           ),
           const SizedBox(height: 24),
           for (final rating in MemoryRating.values)
@@ -168,8 +185,10 @@ class _LocalReviewScreenState extends ConsumerState<LocalReviewScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         buildPageTitle(
-          'Ôn tập',
-          'Thẻ ${session.position + 1} / ${session.cards.length}',
+          session.revealed ? 'Ôn tập · Mặt đáp án' : 'Ôn tập',
+          session.revealed
+              ? 'Hãy chọn mức nhớ phù hợp với lần ôn này.'
+              : 'Thẻ ${session.position + 1} / ${session.cards.length}',
         ),
         const SizedBox(height: 16),
         LinearProgressIndicator(
@@ -275,7 +294,7 @@ class _LocalReviewScreenState extends ConsumerState<LocalReviewScreen> {
           ),
           const SizedBox(height: 10),
           const Text(
-            'Chọn mức sát với lần nhớ vừa rồi.',
+            'Quên: học lại · Khó: sớm hơn · Nhớ: đúng hạn · Dễ: lâu hơn',
             textAlign: TextAlign.center,
           ),
         ],

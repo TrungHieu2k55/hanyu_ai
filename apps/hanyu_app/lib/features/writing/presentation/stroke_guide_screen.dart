@@ -12,9 +12,12 @@ class StrokeGuideScreen extends StatefulWidget {
     required this.hanzi,
     required this.pinyin,
     required this.meaning,
+    this.onPractice,
+    this.onFreeWriting,
     super.key,
   });
   final String hanzi, pinyin, meaning;
+  final VoidCallback? onPractice, onFreeWriting;
   @override
   State<StrokeGuideScreen> createState() => _StrokeGuideScreenState();
 }
@@ -69,19 +72,21 @@ class _StrokeGuideScreenState extends State<StrokeGuideScreen>
           ),
           const SizedBox(height: 20),
           FilledButton(
-            onPressed: () => Navigator.push<void>(
-              context,
-              MaterialPageRoute(
-                builder: (_) => DetailScaffold(
-                  title: 'Viết tự do',
-                  body: WritingCanvasScreen(
-                    hanzi: widget.hanzi,
-                    pinyin: widget.pinyin,
-                    meaning: widget.meaning,
+            onPressed:
+                widget.onFreeWriting ??
+                () => Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DetailScaffold(
+                      title: 'Viết tự do',
+                      body: WritingCanvasScreen(
+                        hanzi: widget.hanzi,
+                        pinyin: widget.pinyin,
+                        meaning: widget.meaning,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
             child: const Text('Dùng canvas tự do'),
           ),
         ],
@@ -147,15 +152,17 @@ class _StrokeGuideScreenState extends State<StrokeGuideScreen>
         ),
         const SizedBox(height: 24),
         FilledButton(
-          onPressed: () => Navigator.push<void>(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const DetailScaffold(
-                title: 'Tập theo nét · mẫu',
-                body: StrokePracticeScreen(),
+          onPressed:
+              widget.onPractice ??
+              () => Navigator.push<void>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const DetailScaffold(
+                    title: 'Tập theo nét · mẫu',
+                    body: StrokePracticeScreen(),
+                  ),
+                ),
               ),
-            ),
-          ),
           child: const Text('Thử luyện theo hai nét mẫu'),
         ),
       ],

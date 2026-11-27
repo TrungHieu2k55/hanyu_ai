@@ -1,4 +1,6 @@
 import '../../../shared/widgets/learner_surface.dart';
+import '../../../shared/widgets/figma_icon.dart';
+import '../../ocr/presentation/sample_image.dart';
 
 import 'dart:convert';
 
@@ -51,6 +53,7 @@ class _LocalPhotoEditorState extends PracticeEditorState<LocalPhotoEditor> {
   }
 
   Future<void> pick(bool camera) async {
+    if (busy) return;
     onBusy(true);
     setState(() {
       error = null;
@@ -142,23 +145,32 @@ class _LocalPhotoEditorState extends PracticeEditorState<LocalPhotoEditor> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         buildPageTitle(
-          'Kiểm tra ảnh và văn bản',
-          'Chọn ảnh và tự nhập văn bản. Chưa có OCR; ảnh không được gửi lên mạng.',
+          pending != null
+              ? 'Kiểm tra ảnh'
+              : 'Gặp chữ mới trên sách hoặc biển hiệu?',
+          'Ảnh được giữ trên thiết bị. Nhập lại chữ trong ảnh để tra từ.',
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+        if (pending == null && input == null && imageId == null) ...[
+          const SampleScanImage(lookupIllustration: true),
+          const SizedBox(height: 12),
+        ],
         Wrap(
           spacing: 12,
           runSpacing: 8,
           children: [
+            FilledButton.icon(
+              onPressed: busy ? null : () => pick(true),
+              icon: FigmaIcon(
+                FigmaGlyph.camera,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+              label: const Text('Chụp ảnh bằng camera'),
+            ),
             OutlinedButton.icon(
               onPressed: busy ? null : () => pick(false),
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Chọn ảnh thật'),
-            ),
-            OutlinedButton.icon(
-              onPressed: busy ? null : () => pick(true),
-              icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text('Chụp ảnh'),
+              label: const Text('Chọn từ thư viện ảnh'),
             ),
           ],
         ),
@@ -273,7 +285,7 @@ class _LocalPhotoEditorState extends PracticeEditorState<LocalPhotoEditor> {
             title: 'Không có kết quả',
             message: 'Chưa có từ khớp. Bạn có thể tự thêm từ riêng.',
           ),
-        for (final w in matches)
+        for (final w in matches) ...[
           PracticeWordAction(
             word: w,
             revision: revision,
@@ -282,6 +294,14 @@ class _LocalPhotoEditorState extends PracticeEditorState<LocalPhotoEditor> {
             onBusy: onBusy,
             onSaved: committed,
           ),
+          TextButton(
+            onPressed: busy || saved != intent
+                ? null
+                : () =>
+                      context.push('/words/${Uri.encodeComponent(w.entry.id)}'),
+            child: Text('Mở mục từ ${w.entry.hanzi}'),
+          ),
+        ],
         if (saved != intent)
           const Text(
             'Lưu ảnh/văn bản trước khi mở màn khác hoặc lưu từ vào ôn.',
@@ -292,6 +312,11 @@ class _LocalPhotoEditorState extends PracticeEditorState<LocalPhotoEditor> {
               : () => context.push('/personal/new'),
           child: const Text('Tự thêm từ cá nhân, Pinyin và nghĩa'),
         ),
+        if (widget.entry == null)
+          TextButton(
+            onPressed: busy ? null : () => context.push('/preview/photos'),
+            child: const Text('Xem kết quả đọc ảnh mẫu'),
+          ),
         reloadButton(),
         if (widget.entry != null)
           AsyncCommitButton(

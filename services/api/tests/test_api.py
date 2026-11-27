@@ -3,7 +3,7 @@ import time
 import unittest
 import wave
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import jwt
@@ -13,10 +13,13 @@ from jwt.exceptions import PyJWKClientConnectionError, PyJWKClientError
 from PIL import Image
 
 from app.auth import SupabaseJwtVerifier
+from app.backend import PostgresBackend
 from app.contract import CONTRACT
 from app.errors import ApiError
 from app.main import create_app
 from app.ports import Access, Call, Identity, Result
+from app.postgres import Database
+from app.storage import ImageStorage
 
 USER, OTHER, SESSION, JOB, KEY = [uuid4() for _ in range(5)]
 STAMP = "2026-11-24T00:00:00Z"
@@ -118,6 +121,19 @@ def wav(seconds: int) -> bytes:
         track.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
         track.writeframes(bytes(8000 * 2 * seconds))
     return data.getvalue()
+
+
+class BackendContractTests(unittest.TestCase):
+    def test_backend_handlers_match_contract_operations(self):
+        backend = PostgresBackend(Mock(spec=Database), Mock(spec=ImageStorage))
+        operations = {
+            operation["operationId"]
+            for methods in CONTRACT["paths"].values()
+            for operation in methods.values()
+        }
+        # The HTTP layer dispatches these through dedicated methods.
+        expected = operations - {"health", "deletionStatus"}
+        self.assertEqual(set(backend._handlers), expected)
 
 
 class HttpTests(unittest.TestCase):

@@ -6,7 +6,8 @@ import 'package:doanchuyennganh2/shared/widgets/presentation_helpers.dart';
 import 'package:doanchuyennganh2/shared/widgets/unsaved_changes_guard.dart';
 
 class StrokePracticeScreen extends StatefulWidget {
-  const StrokePracticeScreen({super.key});
+  const StrokePracticeScreen({this.onBackToGuide, super.key});
+  final VoidCallback? onBackToGuide;
   @override
   State<StrokePracticeScreen> createState() => _StrokePracticeScreenState();
 }
@@ -42,7 +43,7 @@ class _StrokePracticeScreenState extends State<StrokePracticeScreen> {
             child: const Text('Tập lại hai nét mẫu'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: widget.onBackToGuide ?? () => Navigator.pop(context),
             child: const Text('Về hướng dẫn nét'),
           ),
         ],

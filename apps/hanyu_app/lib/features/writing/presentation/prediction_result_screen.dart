@@ -5,7 +5,13 @@ import 'package:doanchuyennganh2/shared/widgets/panel_card.dart';
 import 'package:doanchuyennganh2/shared/widgets/presentation_helpers.dart';
 import 'package:doanchuyennganh2/shared/widgets/status_panel.dart';
 
-enum PredictionMode { notConfigured, candidates, uncertain, unsupported }
+enum PredictionMode {
+  notConfigured,
+  candidates,
+  uncertain,
+  unsupported,
+  noSuggestions,
+}
 
 class PredictionResultScreen extends StatelessWidget {
   const PredictionResultScreen({
@@ -42,6 +48,12 @@ class PredictionResultScreen extends StatelessWidget {
         const PreviewStatusPanel(
           state: PreviewState.notConfigured,
           message: 'Mô hình chưa được nối. Nét viết vẫn giữ ở màn trước. Bạn có thể quay lại hoặc tự chọn chữ.',
+        )
+      else if (mode == PredictionMode.noSuggestions)
+        const StatusPanel(
+          icon: Icons.search_off_outlined,
+          title: 'Chưa có chữ phù hợp',
+          message: 'Trạng thái mẫu. Hãy quay lại viết rõ một chữ hoặc chọn bằng tay.',
         )
       else if (mode == PredictionMode.unsupported)
         const PanelCard(

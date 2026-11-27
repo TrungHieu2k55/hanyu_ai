@@ -10,6 +10,8 @@ abstract final class AppTheme {
 
   static ThemeData _build({bool learner = false}) => ThemeData(
     useMaterial3: true,
+    visualDensity: learner ? VisualDensity.standard : null,
+    materialTapTargetSize: learner ? MaterialTapTargetSize.padded : null,
     fontFamily: learner ? 'Inter' : null,
     fontFamilyFallback: [
       if (learner) 'Noto Sans SC',

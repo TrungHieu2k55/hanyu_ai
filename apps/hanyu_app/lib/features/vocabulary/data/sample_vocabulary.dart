@@ -12,6 +12,7 @@ const sampleVocabulary = <VocabularyItem>[
   ),
   VocabularyItem(
     id: '2',
+    partOfSpeech: 'Động từ',
     level: 1,
     hanzi: '学习',
     pinyin: 'xuéxí',
@@ -30,6 +31,7 @@ const sampleVocabulary = <VocabularyItem>[
   ),
   VocabularyItem(
     id: '4',
+    partOfSpeech: 'Danh từ',
     level: 1,
     hanzi: '中国',
     pinyin: 'Zhōngguó',
@@ -39,6 +41,7 @@ const sampleVocabulary = <VocabularyItem>[
   ),
   VocabularyItem(
     id: '5',
+    partOfSpeech: 'Động từ',
     level: 2,
     hanzi: '旅游',
     pinyin: 'lǚyóu',
@@ -48,6 +51,7 @@ const sampleVocabulary = <VocabularyItem>[
   ),
   VocabularyItem(
     id: '6',
+    partOfSpeech: 'Tính từ',
     level: 2,
     hanzi: '便宜',
     pinyin: 'piányi',
@@ -57,6 +61,7 @@ const sampleVocabulary = <VocabularyItem>[
   ),
   VocabularyItem(
     id: '7',
+    partOfSpeech: 'Danh từ',
     level: 2,
     hanzi: '方向',
     pinyin: 'fāngxiàng',
@@ -66,6 +71,7 @@ const sampleVocabulary = <VocabularyItem>[
   ),
   VocabularyItem(
     id: '8',
+    partOfSpeech: 'Động từ',
     level: 3,
     hanzi: '合作',
     pinyin: 'hézuò',
@@ -75,6 +81,7 @@ const sampleVocabulary = <VocabularyItem>[
   ),
   VocabularyItem(
     id: '9',
+    partOfSpeech: 'Danh từ',
     level: 3,
     hanzi: '经验',
     pinyin: 'jīngyàn',

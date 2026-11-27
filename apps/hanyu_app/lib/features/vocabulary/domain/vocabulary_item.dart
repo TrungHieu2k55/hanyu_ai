@@ -7,6 +7,7 @@ class VocabularyItem {
     required this.vietnamese,
     required this.exampleHanzi,
     required this.exampleVietnamese,
+    this.partOfSpeech,
     this.favorite = false,
     this.personal = false,
   });
@@ -18,6 +19,7 @@ class VocabularyItem {
   final String vietnamese;
   final String exampleHanzi;
   final String exampleVietnamese;
+  final String? partOfSpeech;
   final bool favorite;
   final bool personal;
 
@@ -29,6 +31,7 @@ class VocabularyItem {
     vietnamese: vietnamese,
     exampleHanzi: exampleHanzi,
     exampleVietnamese: exampleVietnamese,
+    partOfSpeech: partOfSpeech,
     favorite: favorite ?? this.favorite,
     personal: personal,
   );

@@ -51,6 +51,19 @@ class _LocalProgressScreenState extends State<LocalProgressScreen> {
           'Đây là tự đánh giá, không đo mức thông thạo hoặc năng lực HSK.',
         ),
         const SizedBox(height: 24),
+        buildActionTile(
+          Icons.emoji_events_outlined,
+          'Thử thách & huy hiệu',
+          'Theo dõi mục tiêu học trong ngày',
+          () => context.push('/progress/goals'),
+        ),
+        buildActionTile(
+          Icons.fact_check_outlined,
+          'Sổ lỗi cá nhân',
+          'Xem lại bài luyện, thẻ ôn và câu thi cần sửa',
+          () => context.push('/progress/mistakes'),
+        ),
+        const SizedBox(height: 14),
         buildSectionHeading('Lịch sử ôn và bài đọc'),
         const SizedBox(height: 12),
         Wrap(

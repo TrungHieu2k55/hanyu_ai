@@ -130,6 +130,22 @@ class Tts:
                 WHERE owner_id=%s AND a.test_revision_id=q.test_revision_id AND a.status<>'legacy_unverified')""",
                 (body["question_id"], revision, owner),
             )
+        elif kind == "study_lesson":
+            row = await one(
+                tx,
+                """SELECT CASE WHEN kind='pinyin' THEN exercise->'tone_audio'->>(%s::text)
+                  ELSE coalesce(exercise->>'audio_text',exercise->>'reference_text') END AS text
+                FROM app.study_lessons WHERE id=%s AND revision=%s AND published
+                  AND CASE WHEN kind='pinyin' THEN (exercise->'tone_audio') ? (%s::text)
+                    ELSE kind IN ('dictation','pronunciation') AND %s::text IS NULL END""",
+                (
+                    body["option_id"],
+                    body["lesson_id"],
+                    revision,
+                    body["option_id"],
+                    body["option_id"],
+                ),
+            )
         elif kind == "vocabulary":
             row = await one(
                 tx,

@@ -12,25 +12,31 @@ class LocalPracticeHome extends StatelessWidget {
   static const modes = [
     (
       FigmaGlyph.practice,
-      'Luyện viết có lưu',
-      'Lưu nét bút và xem lại lịch sử',
-      '/writing',
+      'Luyện theo nét',
+      'Chọn chữ mẫu rồi luyện thứ tự nét',
+      '/practice/strokes',
+    ),
+    (
+      FigmaGlyph.practice,
+      'Viết tay để tra chữ',
+      'Viết trực tiếp một chữ trong ô',
+      '/practice/handwriting',
     ),
     (
       FigmaGlyph.camera,
-      'Ảnh và văn bản tự nhập',
+      'Chụp ảnh để tra chữ',
       'Chụp hoặc chọn ảnh rồi tra từ',
-      '/photos',
+      '/photos/new',
     ),
     (
       FigmaGlyph.conversation,
-      'Hội thoại thủ công và audio',
+      'Hội thoại',
       'Tập nói, ghi âm và nghe lại',
       '/conversations',
     ),
     (
       FigmaGlyph.headphones,
-      'Thi thử và luyện đọc',
+      'Thi thử',
       'Làm bài và xem kết quả đã lưu',
       '/exams',
     ),
@@ -39,10 +45,16 @@ class LocalPracticeHome extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      buildPageTitle('Luyện tập', 'Chọn bài luyện cho hôm nay.'),
-      const SizedBox(height: 20),
+      if (MediaQuery.sizeOf(context).width >= 760)
+        buildPageTitle('Luyện tập', 'Chọn bài luyện cho hôm nay.')
+      else
+        Text(
+          'Chọn bài luyện cho hôm nay.',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      const SizedBox(height: 16),
       const Text(
-        'BẮT ĐẦU TỪ NÉT CHỮ',
+        'LUYỆN VIẾT VÀ TRA CHỮ',
         style: TextStyle(
           color: brandTeal,
           fontSize: 12,
@@ -62,12 +74,22 @@ class LocalPracticeHome extends StatelessWidget {
               for (var i = 0; i < modes.length; i++) ...[
                 if (i > 0) const Divider(height: 1, color: surfaceBorder),
                 ListTile(
+                  minTileHeight: 64,
                   tileColor: i == 0 ? softSurface : null,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  leading: FigmaIcon(modes[i].$1),
+                  leading: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: softSurface,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(7),
+                      child: FigmaIcon(modes[i].$1, color: brandTeal),
+                    ),
+                  ),
                   title: Text(
                     modes[i].$2,
                     style: const TextStyle(fontWeight: FontWeight.w700),
@@ -83,7 +105,31 @@ class LocalPracticeHome extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       const LearnerSurface(
-        child: Text('Từ đã lưu có thể ôn lại ở tab Ôn tập.'),
+        color: softSurface,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FigmaIcon(FigmaGlyph.review, color: brandTeal),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Từ vựng dùng chung',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  Text('Từ bạn lưu cũng xuất hiện trong bộ ôn.'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
+      TextButton(
+        onPressed: () => context.push('/practice/lessons'),
+        child: const Text('Mở danh mục bài luyện'),
       ),
       const SizedBox(height: 12),
       TextButton(
